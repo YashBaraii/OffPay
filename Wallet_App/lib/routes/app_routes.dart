@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
-import '../presentation/send_payment/send_payment.dart';
-import '../presentation/wallet_dashboard/wallet_dashboard.dart';
-import '../presentation/receive_payment/receive_payment.dart';
-import '../presentation/transaction_history/transaction_history.dart';
-import '../presentation/profile_settings/profile_settings.dart';
-import '../presentation/qr_code_scanner/qr_code_scanner.dart';
-import '../presentation/auth/login_screen.dart';
-import '../presentation/auth/signup_screen.dart';
+
+import '../presentation/authentication_screen/authentication_screen.dart';
+import '../presentation/dashboard_screen/dashboard_screen.dart';
+import '../presentation/payment_confirmation_screen/payment_confirmation_screen.dart';
+import '../presentation/qr_code_display_screen/qr_code_display_screen.dart';
+import '../presentation/receive_money_screen/receive_money_screen.dart';
+import '../presentation/send_money_screen/send_money_screen.dart';
+import '../services/auth_service.dart';
 
 class AppRoutes {
-  // TODO: Add your routes here
-  static const String initial = '/';
-  static const String login = '/login';
-  static const String signup = '/signup';
-  static const String sendPayment = '/send-payment';
-  static const String walletDashboard = '/wallet-dashboard';
-  static const String receivePayment = '/receive-payment';
-  static const String transactionHistory = '/transaction-history';
-  static const String profileSettings = '/profile-settings';
-  static const String qrCodeScanner = '/qr-code-scanner';
+  static const String initial = '/dashboard-screen';
+  static const String dashboardScreen = '/dashboard-screen';
+  static const String authenticationScreen = '/authentication-screen';
+  static const String sendMoneyScreen = '/send-money-screen';
+  static const String receiveMoneyScreen = '/receive-money-screen';
+  static const String qrCodeDisplayScreen = '/qr-code-display-screen';
+  static const String paymentConfirmationScreen =
+      '/payment-confirmation-screen';
 
-  static Map<String, WidgetBuilder> routes = {
-    initial: (context) => const LoginScreen(),
-    login: (context) => const LoginScreen(),
-    signup: (context) => const SignUpScreen(),
-    sendPayment: (context) => const SendPayment(),
-    walletDashboard: (context) => const WalletDashboard(),
-    receivePayment: (context) => const ReceivePayment(),
-    transactionHistory: (context) => const TransactionHistory(),
-    profileSettings: (context) => const ProfileSettings(),
-    qrCodeScanner: (context) => const QrCodeScanner(),
-    // TODO: Add your other routes here
-  };
+  static Map<String, WidgetBuilder> get routes {
+    return {
+      dashboardScreen: (context) {
+        // Check authentication status
+        if (AuthService.instance.isSignedIn) {
+          return const DashboardScreen();
+        } else {
+          return const AuthenticationScreen();
+        }
+      },
+      authenticationScreen: (context) => const AuthenticationScreen(),
+      sendMoneyScreen: (context) => const SendMoneyScreen(),
+      receiveMoneyScreen: (context) => const ReceiveMoneyScreen(),
+      qrCodeDisplayScreen: (context) => const QrCodeDisplayScreen(),
+      paymentConfirmationScreen: (context) => const PaymentConfirmationScreen(),
+    };
+  }
 }

@@ -1,4 +1,4 @@
-name: offlinepay_p2p
+name: offlinepay
 description: A new Flutter project.
 publish_to: none
 version: 1.0.0+1
@@ -19,19 +19,20 @@ dependencies:
   
   # Feature dependencies - safe to modify
   cached_network_image: ^3.3.1
-  connectivity_plus: ^5.0.2
+  connectivity_plus: ^6.1.4
   dio: ^5.4.0
   fluttertoast: ^8.2.4
   fl_chart: ^0.65.0
-  camera: ^0.10.5+5
-  mobile_scanner: ^3.5.6
-  permission_handler: ^11.1.0
   qr_flutter: ^4.1.0
-  
+  share_plus: ^7.2.2
+  screen_brightness: ^0.2.2+1
+  camera: ^0.10.5+5
+  permission_handler: ^11.1.0
+  local_auth: ^2.1.6
+
   # Supabase integration
   supabase_flutter: ^2.9.1
 
-  universal_html: ^2.2.4
 dev_dependencies:
   flutter_test:    # CRITICAL: Required for Flutter project testing - DO NOT REMOVE
     sdk: flutter   # CRITICAL: Required for Flutter project testing - DO NOT REMOVE
