@@ -44,6 +44,8 @@ import com.example.trialpaymentapp.ui.viewmodel.SendMoneyViewModel
 import com.example.trialpaymentapp.ui.viewmodel.TransactionHistoryViewModel
 // Ensure QrUtils is imported
 import com.example.trialpaymentapp.QrUtils
+// Import the new ReceiveMoneyScreen
+import com.example.trialpaymentapp.ui.screens.ReceiveMoneyScreen
 
 import java.text.SimpleDateFormat
 import java.util.*
@@ -150,7 +152,7 @@ fun PaymentAppContent() {
                     onTransactionHistoryClicked = { currentScreen = Screen.TransactionHistory }
                 )
                 Screen.SendMoney -> SendMoneyScreen(sendMoneyViewModel)
-                Screen.ReceiveMoney -> ReceiveMoneyScreen(receiveMoneyViewModel)
+                Screen.ReceiveMoney -> ReceiveMoneyScreen(receiveMoneyViewModel) // This now calls the imported version
                 Screen.TransactionHistory -> TransactionHistoryScreen(transactionHistoryViewModel)
             }
         }
@@ -168,6 +170,7 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Greeting Text
@@ -374,6 +377,7 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
                     .padding(horizontal = 16.dp, vertical = 4.dp)
                     .align(Alignment.CenterHorizontally),
                 style = MaterialTheme.typography.bodySmall, // Smaller for the raw data
+                textAlign = TextAlign.Center,
                 maxLines = 3, // Prevent very long strings from taking too much space
                 overflow = TextOverflow.Ellipsis // Add ellipsis for overflow
             )
@@ -381,37 +385,8 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
     }
 }
 
-
-@Composable
-fun ReceiveMoneyScreen(viewModel: ReceiveMoneyViewModel) {
-    val scannedDataFeedback by viewModel.scannedDataFeedback.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        ElevatedButton(
-            onClick = {
-                // Example of a more complete payload for testing ReceiveMoneyScreen
-                viewModel.processScannedQrCode("amount=50.0;senderTxId=test-sender-123;details=Test Payment by QR;timestamp=1678886400000;securityKey=someSecureString")
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Scan QR Code (Simulated)")
-        }
-        scannedDataFeedback?.let { feedback ->
-            Text(
-                text = feedback,
-                modifier = Modifier.padding(top = 16.dp),
-                color = if (feedback.startsWith("Error:")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
+// The old ReceiveMoneyScreen Composable that was here has been removed.
+// The new version is imported from com.example.trialpaymentapp.ui.screens.ReceiveMoneyScreen
 
 @Composable
 fun TransactionHistoryScreen(viewModel: TransactionHistoryViewModel) {
