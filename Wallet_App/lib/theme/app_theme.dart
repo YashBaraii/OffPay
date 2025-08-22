@@ -121,7 +121,7 @@ class AppTheme {
     ),
 
     // Card theme with subtle elevation
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: surfaceLight,
       elevation: 2.0,
       shadowColor: shadowLight,
@@ -276,7 +276,7 @@ class AppTheme {
     ),
 
     // Tab bar theme for navigation
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: primaryLight,
       unselectedLabelColor: onBackgroundLight,
       indicatorColor: primaryLight,
@@ -318,7 +318,8 @@ class AppTheme {
         fontSize: 12,
         fontWeight: FontWeight.w400,
       ),
-    ), dialogTheme: DialogThemeData(backgroundColor: surfaceLight),
+    ),
+    dialogTheme: DialogThemeData(backgroundColor: surfaceLight),
   );
 
   /// Dark theme optimized for low-light financial interactions
@@ -372,7 +373,7 @@ class AppTheme {
     ),
 
     // Card theme for dark mode
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: surfaceDark,
       elevation: 2.0,
       shadowColor: shadowDark,
@@ -527,7 +528,7 @@ class AppTheme {
     ),
 
     // Tab bar theme for dark mode
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: primaryDark,
       unselectedLabelColor: onBackgroundDark,
       indicatorColor: primaryDark,
@@ -569,7 +570,8 @@ class AppTheme {
         fontSize: 12,
         fontWeight: FontWeight.w400,
       ),
-    ), dialogTheme: DialogThemeData(backgroundColor: surfaceDark),
+    ),
+    dialogTheme: DialogThemeData(backgroundColor: surfaceDark),
   );
 
   /// Helper method to build text theme using Inter font family

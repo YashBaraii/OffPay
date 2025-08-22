@@ -16,7 +16,7 @@ class AuthenticationScreen extends StatefulWidget {
 }
 
 class _AuthenticationScreenState extends State<AuthenticationScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   PageController _pageController = PageController();
   int _currentPage = 0;
   bool _isLoading = false;
