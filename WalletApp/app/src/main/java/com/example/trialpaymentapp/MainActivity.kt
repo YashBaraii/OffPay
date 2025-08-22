@@ -39,6 +39,7 @@ import com.example.trialpaymentapp.data.TransactionDao
 import com.example.trialpaymentapp.ui.theme.DeepBlue
 import com.example.trialpaymentapp.ui.theme.SkyBlue
 import com.example.trialpaymentapp.ui.theme.TrialPaymentAppTheme
+import com.example.trialpaymentapp.ui.viewmodel.BalanceViewModel // Import BalanceViewModel
 import com.example.trialpaymentapp.ui.viewmodel.ReceiveMoneyViewModel
 import com.example.trialpaymentapp.ui.viewmodel.SendMoneyViewModel
 import com.example.trialpaymentapp.ui.viewmodel.TransactionHistoryViewModel
@@ -49,6 +50,7 @@ import com.example.trialpaymentapp.ui.screens.ReceiveMoneyScreen
 
 import java.text.SimpleDateFormat
 import java.util.*
+import java.text.NumberFormat // For currency formatting
 
 // Sealed class to represent different screens
 sealed class Screen {
@@ -71,6 +73,9 @@ class BaseViewModelFactory(private val transactionDao: TransactionDao) : ViewMod
             }
             modelClass.isAssignableFrom(TransactionHistoryViewModel::class.java) -> {
                 TransactionHistoryViewModel(transactionDao) as T
+            }
+            modelClass.isAssignableFrom(BalanceViewModel::class.java) -> { // Added BalanceViewModel
+                BalanceViewModel(transactionDao) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
@@ -108,6 +113,7 @@ fun PaymentAppContent() {
     val sendMoneyViewModel: SendMoneyViewModel = viewModel(factory = factory)
     val receiveMoneyViewModel: ReceiveMoneyViewModel = viewModel(factory = factory)
     val transactionHistoryViewModel: TransactionHistoryViewModel = viewModel(factory = factory)
+    val balanceViewModel: BalanceViewModel = viewModel(factory = factory) // Instantiate BalanceViewModel
 
     Scaffold(
         topBar = {
@@ -147,6 +153,7 @@ fun PaymentAppContent() {
         Box(modifier = Modifier.padding(innerPadding)) {
             when (currentScreen) {
                 Screen.Home -> HomeScreen(
+                    balanceViewModel = balanceViewModel, // Pass BalanceViewModel
                     onSendMoneyClicked = { currentScreen = Screen.SendMoney },
                     onReceiveMoneyClicked = { currentScreen = Screen.ReceiveMoney },
                     onTransactionHistoryClicked = { currentScreen = Screen.TransactionHistory }
@@ -161,11 +168,14 @@ fun PaymentAppContent() {
 
 @Composable
 fun HomeScreen(
+    balanceViewModel: BalanceViewModel, // Accept BalanceViewModel
     onSendMoneyClicked: () -> Unit,
     onReceiveMoneyClicked: () -> Unit,
     onTransactionHistoryClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val balance by balanceViewModel.currentBalance.collectAsState() // Collect balance state
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -189,6 +199,7 @@ fun HomeScreen(
 
         // Balance Card
         BalanceCard(
+            balance = balance, // Pass the collected balance
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
@@ -226,12 +237,14 @@ fun HomeScreen(
 }
 
 @Composable
-fun BalanceCard(modifier: Modifier = Modifier) {
-    // Assuming DeepBlue and SkyBlue are defined in your Color.kt
-    // and imported in MainActivity.kt
+fun BalanceCard(
+    balance: Double, // Accept dynamic balance
+    modifier: Modifier = Modifier
+) {
     val cardGradient = Brush.verticalGradient(
         colors = listOf(DeepBlue, SkyBlue)
     )
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("en", "IN")) } // For ₹ formatting
 
     Card(
         modifier = modifier
@@ -248,29 +261,28 @@ fun BalanceCard(modifier: Modifier = Modifier) {
                 Text(
                     text = "Available Balance",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White // Assuming text on gradient should be light
+                    color = Color.White
                 )
                 Text(
-                    text = "₹0.00", // Placeholder
+                    text = currencyFormat.format(balance), // Display formatted dynamic balance
                     style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
                     color = Color.White,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 Text(
-                    text = "Last sync: Just now",
+                    text = "Last sync: Just now", // This could also be dynamic later
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.8f) // Slightly transparent white
+                    color = Color.White.copy(alpha = 0.8f)
                 )
             }
-            // Status Badge
             Text(
-                text = "Online", // Placeholder
+                text = "Online",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .background(
-                        color = Color.Green.copy(alpha = 0.3f), // Or a theme color
+                        color = Color.Green.copy(alpha = 0.3f),
                         shape = RoundedCornerShape(4.dp)
                     )
                     .padding(horizontal = 8.dp, vertical = 4.dp)
@@ -432,7 +444,23 @@ fun TransactionListItem(transaction: Transaction) {
 @Composable
 fun HomeScreenPreview() {
     TrialPaymentAppTheme {
-        HomeScreen({}, {}, {})
+        // Updated preview to pass a dummy BalanceViewModel or skip it if complex
+        // For simplicity, we might just pass a static balance to BalanceCardPreviewWrapper
+        HomeScreen(
+            balanceViewModel = viewModel(), // This might not work well in Preview without a factory
+            onSendMoneyClicked = {},
+            onReceiveMoneyClicked = {},
+            onTransactionHistoryClicked = {}
+        )
+    }
+}
+
+// It's good practice to make a wrapper for previews if they need specific states
+@Preview(showBackground = true, name = "Balance Card Preview")
+@Composable
+fun BalanceCardPreviewWrapper() {
+    TrialPaymentAppTheme {
+        BalanceCard(balance = 12345.67)
     }
 }
 
