@@ -21,7 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
+// import androidx.compose.ui.graphics.Brush // No longer using custom gradient for BalanceCard
 import androidx.compose.ui.graphics.Color // Required for BorderStroke color
 import androidx.compose.ui.graphics.asImageBitmap // Required to convert Bitmap to ImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -36,8 +36,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trialpaymentapp.data.Transaction
 import com.example.trialpaymentapp.data.TransactionDao
-import com.example.trialpaymentapp.ui.theme.DeepBlue
-import com.example.trialpaymentapp.ui.theme.SkyBlue
+// Remove DeepBlue and SkyBlue if no longer used directly
+// import com.example.trialpaymentapp.ui.theme.DeepBlue
+// import com.example.trialpaymentapp.ui.theme.SkyBlue
 import com.example.trialpaymentapp.ui.theme.TrialPaymentAppTheme
 import com.example.trialpaymentapp.ui.viewmodel.BalanceViewModel // Import BalanceViewModel
 import com.example.trialpaymentapp.ui.viewmodel.ReceiveMoneyViewModel
@@ -128,6 +129,12 @@ fun PaymentAppContent() {
                         }
                     )
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface, // Use theme surface color
+                    titleContentColor = MaterialTheme.colorScheme.onSurface, // Use theme onSurface for title
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                ),
                 navigationIcon = {
                     if (currentScreen != Screen.Home) {
                         IconButton(onClick = {
@@ -150,7 +157,7 @@ fun PaymentAppContent() {
             )
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
+        Box(modifier = Modifier.padding(innerPadding).background(MaterialTheme.colorScheme.background)) {
             when (currentScreen) {
                 Screen.Home -> HomeScreen(
                     balanceViewModel = balanceViewModel, // Pass BalanceViewModel
@@ -187,11 +194,13 @@ fun HomeScreen(
         Text(
             text = "Good Evening",
             style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground, // Use theme color
             modifier = Modifier.align(Alignment.Start)
         )
         Text(
             text = "Welcome",
             style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground, // Use theme color
             modifier = Modifier
                 .align(Alignment.Start)
                 .padding(bottom = 24.dp)
@@ -205,7 +214,7 @@ fun HomeScreen(
                 .padding(bottom = 32.dp)
         )
 
-        // Action Buttons
+        // Action Buttons - ElevatedButton should pick up theme colors by default
         ElevatedButton(
             onClick = onSendMoneyClicked,
             modifier = Modifier
@@ -241,48 +250,49 @@ fun BalanceCard(
     balance: Double, // Accept dynamic balance
     modifier: Modifier = Modifier
 ) {
-    val cardGradient = Brush.verticalGradient(
-        colors = listOf(DeepBlue, SkyBlue)
-    )
-    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("en", "IN")) } // For ₹ formatting
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("en", "IN")) }
 
     Card(
         modifier = modifier
             .shadow(elevation = 8.dp, shape = RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface // Use theme surface color
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Shadow is handled by modifier.shadow
     ) {
         Box(
             modifier = Modifier
-                .background(cardGradient)
+                // .background(MaterialTheme.colorScheme.surface) // Card does this
                 .padding(16.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "Available Balance",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSurface // Use theme color
                 )
                 Text(
-                    text = currencyFormat.format(balance), // Display formatted dynamic balance
+                    text = currencyFormat.format(balance),
                     style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.primary, // Use theme primary for emphasis
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 Text(
-                    text = "Last sync: Just now", // This could also be dynamic later
+                    text = "Last sync: Just now",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f) // Slightly dimmed
                 )
             }
             Text(
                 text = "Online",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface, // Or a specific status color
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .background(
-                        color = Color.Green.copy(alpha = 0.3f),
+                        // Consider a theme-appropriate color or keep green for universal meaning
+                        color = Color.Green.copy(alpha = 0.3f), 
                         shape = RoundedCornerShape(4.dp)
                     )
                     .padding(horizontal = 8.dp, vertical = 4.dp)
@@ -302,22 +312,47 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.background), // Ensure screen background uses theme
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp) // Adds space between direct children
+        verticalArrangement = Arrangement.spacedBy(16.dp) 
     ) {
         OutlinedTextField(
             value = amount,
             onValueChange = { viewModel.updateAmount(it) },
             label = { Text("Amount") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
         )
         OutlinedTextField(
             value = pin,
             onValueChange = { viewModel.updatePin(it) },
             label = { Text("PIN") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
         )
         ElevatedButton(
             onClick = { viewModel.prepareTransactionAndGenerateQr() },
@@ -329,25 +364,24 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
         transactionFeedback?.let { feedback ->
             Text(
                 text = feedback,
-                modifier = Modifier.padding(vertical = 8.dp), // Consistent padding
+                modifier = Modifier.padding(vertical = 8.dp), 
                 color = if (feedback.startsWith("Error:")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
         }
 
         encryptedQrString?.let { data ->
-            // This Spacer provides space above the QR code section if transactionFeedback is also present
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Scan QR Code:",
                 style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Generate QR Code Bitmap when encryptedQrString is available
-            val qrBitmap: Bitmap? by remember(data) { // Use data as key for remember
+            val qrBitmap: Bitmap? by remember(data) { 
                 derivedStateOf {
                     QrUtils.generateQrCodeBitmap(text = data, width = 200, height = 200)
                 }
@@ -360,26 +394,26 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
                     modifier = Modifier
                         .size(200.dp)
                         .align(Alignment.CenterHorizontally)
-                        .border(BorderStroke(1.dp, Color.Gray))
+                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)))
                 )
             } else {
-                // Fallback if bitmap is null (e.g., error in generation, or still processing)
                 Box(
                     modifier = Modifier
                         .size(200.dp)
-                        .border(BorderStroke(1.dp, Color.LightGray))
+                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)))
                         .align(Alignment.CenterHorizontally)
-                        .padding(16.dp), // Padding inside the box
+                        .padding(16.dp), 
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Generating QR Code...", style = MaterialTheme.typography.bodySmall)
+                    Text("Generating QR Code...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground)
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Encrypted Data:",
-                style = MaterialTheme.typography.titleSmall, // Changed for visual hierarchy
+                style = MaterialTheme.typography.titleSmall, 
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Text(
@@ -388,31 +422,31 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
                     .align(Alignment.CenterHorizontally),
-                style = MaterialTheme.typography.bodySmall, // Smaller for the raw data
+                style = MaterialTheme.typography.bodySmall, 
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
-                maxLines = 3, // Prevent very long strings from taking too much space
-                overflow = TextOverflow.Ellipsis // Add ellipsis for overflow
+                maxLines = 3, 
+                overflow = TextOverflow.Ellipsis 
             )
         }
     }
 }
 
-// The old ReceiveMoneyScreen Composable that was here has been removed.
-// The new version is imported from com.example.trialpaymentapp.ui.screens.ReceiveMoneyScreen
 
 @Composable
 fun TransactionHistoryScreen(viewModel: TransactionHistoryViewModel) {
     val transactions by viewModel.transactions.collectAsState(initial = emptyList())
 
     if (transactions.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-            Text("No transactions yet.")
+        Box(modifier = Modifier.fillMaxSize().padding(16.dp).background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+            Text("No transactions yet.", color = MaterialTheme.colorScheme.onBackground)
         }
     } else {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(transactions) { transaction ->
@@ -425,17 +459,19 @@ fun TransactionHistoryScreen(viewModel: TransactionHistoryViewModel) {
 @Composable
 fun TransactionListItem(transaction: Transaction) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Type: ${transaction.type}", style = MaterialTheme.typography.titleMedium)
-            Text("Amount: ${transaction.amount}", style = MaterialTheme.typography.bodyLarge)
+            Text("Type: ${transaction.type}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Text("Amount: ${transaction.amount}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             Text(
                 "Date: ${SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(transaction.timestamp))}",
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
-            Text("Details: ${transaction.details}", style = MaterialTheme.typography.bodySmall)
-            Text("Synced: ${transaction.isSynced}", style = MaterialTheme.typography.bodySmall)
+            Text("Details: ${transaction.details}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            Text("Synced: ${transaction.isSynced}", style = MaterialTheme.typography.bodySmall, color = if (transaction.isSynced) Color.Green else MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -443,11 +479,9 @@ fun TransactionListItem(transaction: Transaction) {
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    TrialPaymentAppTheme {
-        // Updated preview to pass a dummy BalanceViewModel or skip it if complex
-        // For simplicity, we might just pass a static balance to BalanceCardPreviewWrapper
+    TrialPaymentAppTheme(darkTheme = true) {
         HomeScreen(
-            balanceViewModel = viewModel(), // This might not work well in Preview without a factory
+            balanceViewModel = viewModel(), 
             onSendMoneyClicked = {},
             onReceiveMoneyClicked = {},
             onTransactionHistoryClicked = {}
@@ -455,11 +489,18 @@ fun HomeScreenPreview() {
     }
 }
 
-// It's good practice to make a wrapper for previews if they need specific states
-@Preview(showBackground = true, name = "Balance Card Preview")
+
+@Preview(showBackground = true, name = "Balance Card Preview Dark")
 @Composable
-fun BalanceCardPreviewWrapper() {
-    TrialPaymentAppTheme {
+fun BalanceCardPreviewDark() {
+    TrialPaymentAppTheme(darkTheme = true) {
+        BalanceCard(balance = 12345.67)
+    }
+}
+@Preview(showBackground = true, name = "Balance Card Preview Light")
+@Composable
+fun BalanceCardPreviewLight() {
+    TrialPaymentAppTheme(darkTheme = false) {
         BalanceCard(balance = 12345.67)
     }
 }
@@ -467,30 +508,15 @@ fun BalanceCardPreviewWrapper() {
 @Preview(showBackground = true)
 @Composable
 fun SendMoneyScreenPreview() {
-    TrialPaymentAppTheme {
-        // Updated preview to reflect more of the SendMoneyScreen structure
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            OutlinedTextField(value = "100", onValueChange = {}, label={Text("Amount")}, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = "1234", onValueChange = {}, label={Text("PIN")}, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-            Button(onClick={}, modifier = Modifier.fillMaxWidth()){ Text("Generate QR & Save Transaction")}
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Scan QR Code:", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Box(modifier = Modifier.size(200.dp).border(BorderStroke(1.dp, Color.Gray)).padding(16.dp), contentAlignment = Alignment.Center) {
-                Text("QR Code Area (Preview)")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Encrypted Data:", style = MaterialTheme.typography.titleSmall)
-            Text("encrypted_data_string_for_preview_123...", textAlign = TextAlign.Center)
-        }
+    TrialPaymentAppTheme(darkTheme = true) {
+        SendMoneyScreen(viewModel()) // This viewModel() might need a factory in previews
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun TransactionHistoryScreenPreview() {
-    TrialPaymentAppTheme {
+    TrialPaymentAppTheme(darkTheme = true) {
         val previewTransactions = listOf(
             Transaction(0, "SENT", 100.0, System.currentTimeMillis(), "details1", "receiver1", false),
             Transaction(0, "RECEIVED", 50.0, System.currentTimeMillis() - 100000, "details2", "sender1", true)
@@ -502,3 +528,4 @@ fun TransactionHistoryScreenPreview() {
         }
     }
 }
+

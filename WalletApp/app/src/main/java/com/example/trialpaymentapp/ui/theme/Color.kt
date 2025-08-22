@@ -16,3 +16,12 @@ val NeutralWhite = Color(0xFFFFFFFF)
 val LightBackground = Color(0xFFF0F4F8)
 val DarkSurface = Color(0xFF1F2937)
 val CharcoalText = Color(0xFF374151)
+
+// New Yellow and Black Theme Colors
+val GoldYellow = Color(0xFFFFD700) // A rich gold/yellow
+val DarkCharcoal = Color(0xFF1A1A1A) // A very dark gray, almost black
+val OffBlack = Color(0xFF2C2C2C)     // Slightly lighter than DarkCharcoal for surfaces
+val LightYellow = Color(0xFFFFE580) // A softer yellow for accents
+val SubtleGray = Color(0xFF4A4A4A)   // A subtle gray for borders/dividers
+val TextOnDark = Color(0xFFE0E0E0)   // Light gray for text on dark backgrounds
+val TextOnYellow = Color(0xFF332E00)  // Dark text for on yellow backgrounds
