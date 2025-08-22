@@ -7,10 +7,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image // Required for Image composable
 import androidx.compose.foundation.BorderStroke // Required for BorderStroke class
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border // Required for border on Image/Box
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
@@ -18,9 +20,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color // Required for BorderStroke color
 import androidx.compose.ui.graphics.asImageBitmap // Required to convert Bitmap to ImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign // For text alignment
 import androidx.compose.ui.text.style.TextOverflow // For text overflow
@@ -31,12 +36,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trialpaymentapp.data.Transaction
 import com.example.trialpaymentapp.data.TransactionDao
+import com.example.trialpaymentapp.ui.theme.DeepBlue
+import com.example.trialpaymentapp.ui.theme.SkyBlue
 import com.example.trialpaymentapp.ui.theme.TrialPaymentAppTheme
 import com.example.trialpaymentapp.ui.viewmodel.ReceiveMoneyViewModel
 import com.example.trialpaymentapp.ui.viewmodel.SendMoneyViewModel
 import com.example.trialpaymentapp.ui.viewmodel.TransactionHistoryViewModel
 // Ensure QrUtils is imported
-import com.example.trialpaymentapp.QrUtils 
+import com.example.trialpaymentapp.QrUtils
 
 import java.text.SimpleDateFormat
 import java.util.*
@@ -161,14 +168,30 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Greeting Text
         Text(
-            text = "Welcome to Offline Pay",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
+            text = "Good Evening",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.align(Alignment.Start)
         )
+        Text(
+            text = "Welcome",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .align(Alignment.Start)
+                .padding(bottom = 24.dp)
+        )
+
+        // Balance Card
+        BalanceCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        )
+
+        // Action Buttons
         ElevatedButton(
             onClick = onSendMoneyClicked,
             modifier = Modifier
@@ -198,6 +221,61 @@ fun HomeScreen(
         }
     }
 }
+
+@Composable
+fun BalanceCard(modifier: Modifier = Modifier) {
+    // Assuming DeepBlue and SkyBlue are defined in your Color.kt
+    // and imported in MainActivity.kt
+    val cardGradient = Brush.verticalGradient(
+        colors = listOf(DeepBlue, SkyBlue)
+    )
+
+    Card(
+        modifier = modifier
+            .shadow(elevation = 8.dp, shape = RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Shadow is handled by modifier.shadow
+    ) {
+        Box(
+            modifier = Modifier
+                .background(cardGradient)
+                .padding(16.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Available Balance",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White // Assuming text on gradient should be light
+                )
+                Text(
+                    text = "₹0.00", // Placeholder
+                    style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                Text(
+                    text = "Last sync: Just now",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.8f) // Slightly transparent white
+                )
+            }
+            // Status Badge
+            Text(
+                text = "Online", // Placeholder
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .background(
+                        color = Color.Green.copy(alpha = 0.3f), // Or a theme color
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
+    }
+}
+
 
 @Composable
 fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
@@ -244,8 +322,8 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
 
         encryptedQrString?.let { data ->
             // This Spacer provides space above the QR code section if transactionFeedback is also present
-            Spacer(modifier = Modifier.height(8.dp)) 
-            
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = "Scan QR Code:",
                 style = MaterialTheme.typography.titleMedium,
@@ -296,7 +374,6 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
                     .padding(horizontal = 16.dp, vertical = 4.dp)
                     .align(Alignment.CenterHorizontally),
                 style = MaterialTheme.typography.bodySmall, // Smaller for the raw data
-                textAlign = TextAlign.Center,
                 maxLines = 3, // Prevent very long strings from taking too much space
                 overflow = TextOverflow.Ellipsis // Add ellipsis for overflow
             )
@@ -393,7 +470,7 @@ fun SendMoneyScreenPreview() {
             OutlinedTextField(value = "100", onValueChange = {}, label={Text("Amount")}, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = "1234", onValueChange = {}, label={Text("PIN")}, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
             Button(onClick={}, modifier = Modifier.fillMaxWidth()){ Text("Generate QR & Save Transaction")}
-            
+
             Spacer(modifier = Modifier.height(8.dp))
             Text("Scan QR Code:", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
