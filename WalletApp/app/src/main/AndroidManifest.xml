@@ -2,11 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Optional if you ever run a foreground sync service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
+    <!-- Camera feature (not required so app installs on devices without camera) -->
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
-
 
     <application
         android:name=".PaymentApp"
@@ -17,18 +21,35 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.TrialPaymentApp">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.TrialPaymentApp">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+        android:theme="@style/Theme.TrialPaymentApp"
+        tools:ignore="ExtraText">
 
-                <category android:name="android.intent.category.LAUNCHER" />
+        <activity
+            android:name=".auth.AuthActivity"
+            android:exported="true"
+            android:theme="@style/Theme.TrialPaymentApp"> <!-- It's good practice to theme all activities -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-    </application>
 
+        <!-- Main activity - NOT a launcher anymore -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.TrialPaymentApp"/>
+
+        <!-- WorkManager initializer -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup" />
+        </provider>
+
+    </application>
 </manifest>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "551728943378",
+    "project_id": "offpay-95ebd",
+    "storage_bucket": "offpay-95ebd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:551728943378:android:f7ccaf3af9678119a663cb",
+        "android_client_info": {
+          "package_name": "com.example.trialpaymentapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_MhlpQCDlk56SrOd52syN1aEA1QJgFhw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
