@@ -1,4 +1,3 @@
-```markdown
 # Offline-First UPI Wallet App (QR-Based Payments)
 
 A secure, instant, and inclusive payment app enabling digital transactions offline using QR codes. Built in Java for Android.
@@ -6,6 +5,7 @@ A secure, instant, and inclusive payment app enabling digital transactions offli
 ---
 
 ## Table of Contents
+
 - Overview
 - Features
 - Architecture
@@ -108,10 +108,10 @@ In `AndroidManifest.xml`:
 1. **Register:** Create an account and set up your wallet.
 2. **Fund Wallet:** Add money online via UPI.
 3. **Offline Payment:**
-    - Enter amount and payee details.
-    - Generate payment QR code.
-    - Receiver scans QR code to receive payment.
-    - Transaction stored locally as ‘pending’.
+   - Enter amount and payee details.
+   - Generate payment QR code.
+   - Receiver scans QR code to receive payment.
+   - Transaction stored locally as ‘pending’.
 4. **Sync:** App automatically syncs all pending transactions when online.
 5. **View Transactions:** Check status and history in the app UI.
 6. **Withdraw:** Withdrawals only allowed online.
@@ -165,5 +165,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-*For questions and contributions, feel free to open issues or submit pull requests on GitHub.*
-```
+_For questions and contributions, feel free to open issues or submit pull requests on GitHub._
