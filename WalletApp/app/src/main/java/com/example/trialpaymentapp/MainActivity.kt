@@ -1,7 +1,7 @@
 package com.example.trialpaymentapp
 
 import android.content.Intent
-import android.graphics.Bitmap
+// Removed: import android.graphics.Bitmap 
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -54,6 +54,9 @@ import com.google.firebase.firestore.FirebaseFirestore // Added import for Payme
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.runtime.rememberCoroutineScope // Added for launching coroutine
+import com.google.firebase.firestore.FieldValue // Potentially needed if AuthManager uses it directly here
+import kotlinx.coroutines.launch // Added for launching coroutine
 
 // --- Navigation States for MainActivity ---
 sealed class MainScreenState {
@@ -78,18 +81,13 @@ class PaymentAppViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(SendMoneyViewModel::class.java) ->
-                // Assuming SendMoneyViewModel might not need AuthManager directly or has a constructor that allows it to be null
-                // If it strictly needs AuthManager, this factory or the VM's constructor needs adjustment.
-                // For now, removing AuthManager based on "Too many arguments" error.
-                SendMoneyViewModel(transactionDao) as T // If SendMoneyViewModel takes AuthManager, add it: SendMoneyViewModel(transactionDao, authManager!!)
+                SendMoneyViewModel(transactionDao) as T // Removed authManager
             modelClass.isAssignableFrom(ReceiveMoneyViewModel::class.java) ->
                 ReceiveMoneyViewModel(transactionDao) as T
             modelClass.isAssignableFrom(TransactionHistoryViewModel::class.java) ->
-                // Similar to SendMoneyViewModel, adjust if AuthManager is strictly required.
-                // For now, removing AuthManager based on "Too many arguments" error.
-                TransactionHistoryViewModel(transactionDao) as T // If TransactionHistoryViewModel takes AuthManager, add it: TransactionHistoryViewModel(transactionDao, authManager!!)
+                TransactionHistoryViewModel(transactionDao) as T // Removed authManager
             modelClass.isAssignableFrom(BalanceViewModel::class.java) ->
-                BalanceViewModel(transactionDao) as T
+                BalanceViewModel(transactionDao) as T // Removed authManager
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }
@@ -100,7 +98,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var authManager: AuthManager
     private lateinit var appDatabase: AppDatabase
-    private lateinit var firestore: FirebaseFirestore // For PaymentApp.firestore
+    private lateinit var firestore: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,7 +106,7 @@ class MainActivity : ComponentActivity() {
 
         val paymentApp = application as PaymentApp
         appDatabase = paymentApp.database
-        firestore = paymentApp.firestore // Initialize firestore from PaymentApp
+        firestore = paymentApp.firestore
         firebaseAuth = FirebaseAuth.getInstance()
         authManager = AuthManager(firebaseAuth, appDatabase, firestore)
 
@@ -118,7 +116,7 @@ class MainActivity : ComponentActivity() {
                 MainAppFlow(
                     authManager = authManager,
                     firebaseAuth = firebaseAuth,
-                    transactionDao = appDatabase.transactionDao(), // Use appDatabase instance
+                    transactionDao = appDatabase.transactionDao(),
                     application = paymentApp
                 )
             }
@@ -131,13 +129,11 @@ fun MainAppFlow(
     authManager: AuthManager,
     firebaseAuth: FirebaseAuth,
     transactionDao: TransactionDao,
-    application: PaymentApp // Kept for factory, though factory might not use it directly
+    application: PaymentApp
 ) {
     var mainScreenState by remember { mutableStateOf<MainScreenState>(MainScreenState.Loading) }
     var currentFirebaseUser by remember { mutableStateOf(firebaseAuth.currentUser) }
-    // val context = LocalContext.current // Unused variable removed
 
-    // Firebase Auth State Listener
     DisposableEffect(firebaseAuth) {
         val authListener = FirebaseAuth.AuthStateListener { auth ->
             val user = auth.currentUser
@@ -152,7 +148,6 @@ fun MainAppFlow(
         }
     }
 
-    // Initial check for Firebase user (in case listener fires after initial composition)
     LaunchedEffect(Unit) {
         if (currentFirebaseUser == null) {
             mainScreenState = MainScreenState.Login
@@ -165,11 +160,11 @@ fun MainAppFlow(
         is MainScreenState.Loading -> LoadingScreen("Checking authentication state...")
         is MainScreenState.Login -> LoginScreen(
             firebaseAuth = firebaseAuth,
+            authManager = authManager, 
             onLoginSuccess = { firebaseUser ->
-                Log.d("MainAppFlow", "Login successful: ${firebaseUser.email}. Setting state to AppContent.")
+                Log.d("MainAppFlow", "Login/Registration successful: ${firebaseUser.email}. Setting state to AppContent.")
                 mainScreenState = MainScreenState.AppContent
             }
-            // onNavigateToProfileSetup removed as it was unused
         )
         is MainScreenState.AppContent -> PaymentAppContent(
             transactionDao = transactionDao,
@@ -199,14 +194,17 @@ fun LoadingScreen(message: String = "Loading...") {
 @Composable
 fun LoginScreen(
     firebaseAuth: FirebaseAuth,
+    authManager: AuthManager, 
     onLoginSuccess: (FirebaseUser) -> Unit
-    // onNavigateToProfileSetup: () -> Unit // Removed as unused
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") } // For registration
     var error by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
-    val context = LocalContext.current // Used for starting AuthActivity
+    var isRegisterMode by remember { mutableStateOf(false) } // To toggle between Login and Register
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope() 
 
     Column(
         modifier = Modifier
@@ -216,11 +214,16 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Login to Your Account", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(bottom = 24.dp))
+        Text(
+            if (isRegisterMode) "Create an Account" else "Login to Your Account",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { email = it.trim() },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -247,6 +250,24 @@ fun LoginScreen(
                 unfocusedContainerColor = Color.Transparent,
             )
         )
+        if (isRegisterMode) {
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirm Password") },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                )
+            )
+        }
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
@@ -256,18 +277,60 @@ fun LoginScreen(
                     error = "Email and password cannot be empty."
                     return@Button
                 }
+                if (isRegisterMode && password.length < 6) {
+                    error = "Password should be at least 6 characters."
+                    return@Button
+                }
+                if (isRegisterMode && password != confirmPassword) {
+                    error = "Passwords do not match."
+                    return@Button
+                }
                 isLoading = true
-                firebaseAuth.signInWithEmailAndPassword(email.trim(), password)
-                    .addOnCompleteListener { task ->
-                        isLoading = false
-                        if (task.isSuccessful) {
-                            Log.d("LoginScreen", "Firebase sign-in successful for: ${email.trim()}")
-                            task.result?.user?.let(onLoginSuccess)
-                        } else {
-                            error = task.exception?.localizedMessage ?: "Login failed. Please check credentials."
-                            Log.w("LoginScreen", "Firebase sign-in error:", task.exception)
+                if (isRegisterMode) {
+                    firebaseAuth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val firebaseUser = task.result?.user
+                                if (firebaseUser != null) {
+                                    Log.d("LoginScreen", "Firebase registration successful for: $email")
+                                    scope.launch {
+                                        try {
+                                            authManager.setupNewUserFirestoreData(firebaseUser)
+                                            Log.d("LoginScreen", "Firestore data setup initiated for new user.")
+                                            onLoginSuccess(firebaseUser) 
+                                        } catch (e: Exception) {
+                                            Log.e("LoginScreen", "Error setting up Firestore data", e)
+                                            error = "Registration succeeded but failed to set up user profile: ${e.localizedMessage}"
+                                            // Optionally sign out to prevent inconsistent state
+                                            // firebaseUser.delete() // More aggressive, or firebaseAuth.signOut()
+                                        } finally {
+                                             isLoading = false
+                                        }
+                                    }
+                                } else {
+                                    isLoading = false
+                                    error = "Registration successful but failed to get user."
+                                    Log.w("LoginScreen", "Firebase registration ok, but user is null")
+                                }
+                            } else {
+                                isLoading = false
+                                error = task.exception?.localizedMessage ?: "Registration failed. Please try again."
+                                Log.w("LoginScreen", "Firebase registration error:", task.exception)
+                            }
                         }
-                    }
+                } else {
+                    firebaseAuth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            isLoading = false
+                            if (task.isSuccessful) {
+                                Log.d("LoginScreen", "Firebase sign-in successful for: $email")
+                                task.result?.user?.let(onLoginSuccess)
+                            } else {
+                                error = task.exception?.localizedMessage ?: "Login failed. Please check credentials."
+                                Log.w("LoginScreen", "Firebase sign-in error:", task.exception)
+                            }
+                        }
+                }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             enabled = !isLoading
@@ -275,20 +338,50 @@ fun LoginScreen(
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
             } else {
-                Text("Login")
+                Text(if (isRegisterMode) "Register" else "Login")
             }
         }
 
         TextButton(
             onClick = {
-                Log.d("LoginScreen", "Register/Forgot Password clicked - Implement navigation or flow.")
-                 error = "Registration/Forgot Password not implemented in this flow."
+                isRegisterMode = !isRegisterMode
+                error = null 
+                Log.d("LoginScreen", "Switched to ${if (isRegisterMode) "Register" else "Login"} mode.")
             },
             modifier = Modifier.padding(top = 16.dp)
         ) {
-            Text("No account? Register / Forgot Password", color = MaterialTheme.colorScheme.primary)
+            Text(
+                if (isRegisterMode) "Already have an account? Login" else "No account? Register",
+                color = MaterialTheme.colorScheme.primary
+            )
         }
 
+        if (!isRegisterMode) {
+            TextButton(
+                onClick = {
+                    if (email.isBlank()) {
+                        error = "Please enter your email to reset password."
+                        return@TextButton
+                    }
+                    isLoading = true // To prevent multiple clicks
+                    firebaseAuth.sendPasswordResetEmail(email)
+                        .addOnCompleteListener { task ->
+                            isLoading = false
+                            if (task.isSuccessful) {
+                                error = "Password reset email sent to $email." 
+                                Log.d("LoginScreen", "Password reset email sent for $email.")
+                            } else {
+                                error = task.exception?.localizedMessage ?: "Failed to send password reset email."
+                                Log.w("LoginScreen", "Error sending password reset email:", task.exception)
+                            }
+                        }
+                },
+                modifier = Modifier.padding(top = 8.dp),
+                enabled = !isLoading 
+            ) {
+                Text("Forgot Password?", color = MaterialTheme.colorScheme.secondary)
+            }
+        }
 
         error?.let {
             Text(
@@ -298,18 +391,6 @@ fun LoginScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
-        }
-         Button( // TEMP: Button to simulate going to AuthActivity if local profile is somehow not set
-            onClick = {
-                Log.d("LoginScreen", "Simulating missing local profile - navigating to AuthActivity")
-                 val intent = Intent(context, AuthActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                context.startActivity(intent)
-            },
-            modifier = Modifier.padding(top = 8.dp)
-
-        ) {
-            Text("DEBUG: Go to Profile Setup (AuthActivity)")
         }
     }
 }
@@ -321,13 +402,11 @@ fun PaymentAppContent(
     transactionDao: TransactionDao,
     authManager: AuthManager,
     firebaseAuth: FirebaseAuth,
-    application: PaymentApp // Kept for factory, but factory might not use it
+    application: PaymentApp
 ) {
     var currentAppScreen by remember { mutableStateOf<AppScreen>(AppScreen.Home) }
-    // val context = LocalContext.current // Unused variable removed
 
     val factory = remember {
-        // Pass authManager if your ViewModels need it and the factory/VMs are updated to handle it.
         PaymentAppViewModelFactory(transactionDao, authManager)
     }
 
@@ -358,9 +437,6 @@ fun PaymentAppContent(
                 navigationIcon = {
                     if (currentAppScreen != AppScreen.Home) {
                         IconButton(onClick = {
-                            if (currentAppScreen == AppScreen.SendMoney) {
-                                // sendMoneyViewModel.clearQrData() // Assuming this method exists
-                            }
                             currentAppScreen = AppScreen.Home
                         }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -378,7 +454,6 @@ fun PaymentAppContent(
                              IconButton(onClick = { 
                                 Log.d("PaymentAppContent", "Logout button clicked.")
                                 firebaseAuth.signOut()
-                                // The AuthStateListener in MainAppFlow will handle navigation to LoginScreen
                             }) {
                                 Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
                             }
@@ -424,13 +499,13 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Good Evening", // Personalize this later
+            text = "Good Evening", 
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.align(Alignment.Start)
         )
         Text(
-            text = "Welcome Back!", // Personalize
+            text = "Welcome Back!", 
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
@@ -485,8 +560,8 @@ fun BalanceCard(
                 )
                 Text("Last sync: Just now", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
             }
-            Text( // Online/Offline Indicator
-                text = "Online", // This should be dynamic based on connectivity
+            Text( 
+                text = "Online", 
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
@@ -561,7 +636,7 @@ fun SendMoneyScreen(viewModel: SendMoneyViewModel) {
             Text("Scan QR Code:", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(modifier = Modifier.height(8.dp))
 
-            val qrBitmap: Bitmap? by remember(data) {
+            val qrBitmap: android.graphics.Bitmap? by remember(data) { // Added android.graphics.Bitmap here
                 derivedStateOf {
                     try { QrUtils.generateQrCodeBitmap(text = data, width = 200, height = 200) } catch (e: Exception) { Log.e("SendMoneyScreen", "Error generating QR", e); null }
                 }
@@ -642,9 +717,12 @@ fun LoadingScreenPreview() {
 @Composable
 fun LoginScreenPreviewDark() {
     TrialPaymentAppTheme(darkTheme = true) {
-        // For preview, it might be better to mock FirebaseAuth if possible or use a simpler setup
-        // However, FirebaseAuth.getInstance() is generally safe for previews if google-services.json is present.
-        LoginScreen(FirebaseAuth.getInstance(), {}) 
+        // For preview, it's best to mock FirebaseAuth and AuthManager
+        // This is a simplified version for preview.
+        val mockAuth = FirebaseAuth.getInstance() // Or a mocked instance
+        val mockAppDatabase = AppDatabase.getDatabase(LocalContext.current) // simplified for preview
+        val mockAuthManager = AuthManager(mockAuth, mockAppDatabase, FirebaseFirestore.getInstance())
+        LoginScreen(mockAuth,mockAuthManager, {}) 
     }
 }
 
@@ -652,7 +730,11 @@ fun LoginScreenPreviewDark() {
 @Composable
 fun HomeScreenPreview() {
     TrialPaymentAppTheme(darkTheme = true) {
-        val dummyBalanceViewModel: BalanceViewModel = viewModel() 
+        val mockAuth = FirebaseAuth.getInstance()
+        val mockAppDatabase = AppDatabase.getDatabase(LocalContext.current)
+        val mockAuthManager = AuthManager(mockAuth, mockAppDatabase, FirebaseFirestore.getInstance())
+        val factory = PaymentAppViewModelFactory(mockAppDatabase.transactionDao(), mockAuthManager)
+        val dummyBalanceViewModel: BalanceViewModel = viewModel(factory = factory) 
         HomeScreen(
             balanceViewModel = dummyBalanceViewModel,
             onSendMoneyClicked = {},
