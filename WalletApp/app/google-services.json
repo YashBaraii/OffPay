@@ -1,8 +1,8 @@
 {
   "project_info": {
-    "project_number": "551728943378",
-    "project_id": "offpay-95ebd",
-    "storage_bucket": "offpay-95ebd.firebasestorage.app"
+    "project_number": "your_project_number",
+    "project_id": "your_project_id",
+    "storage_bucket": "your_storage_bucket"
   },
   "client": [
     {
